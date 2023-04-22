@@ -11,5 +11,5 @@ export default async function handler(req:NextApiRequest, res:NextApiResponse) {
         .insert({ set_id: setId, text: text })
         .select()
 
-    res.status(200).json(data)
+    res.status(200).json({data: data, error: error})
 }
