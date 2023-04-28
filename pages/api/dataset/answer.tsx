@@ -10,11 +10,9 @@ import { PineconeStore } from 'langchain/vectorstores/pinecone';
 import { pinecone } from '../../../lib/pinecone_client';
 import { PINECONE_INDEX_NAME, PINECONE_NAME_SPACE } from '../../../lib/pinecone_settings';
 
-
-import { HNSWLib } from "langchain/vectorstores/hnswlib";
-
 export default async function handler(req:NextApiRequest, res:NextApiResponse) {
     const setId = req.body['setId']
+    const question = req.body['question']
 
     let text= ""
 
@@ -39,21 +37,18 @@ export default async function handler(req:NextApiRequest, res:NextApiResponse) {
     const embeddings = new OpenAIEmbeddings();
     const index = pinecone.Index(PINECONE_INDEX_NAME);
 
-    await PineconeStore.fromDocuments(docs, embeddings, {
+    const vectorStore = await PineconeStore.fromDocuments(docs, embeddings, {
         pineconeIndex: index,
         namespace: PINECONE_NAME_SPACE,
         textKey: 'text',
     });
 
-    // const vectorStore = await HNSWLib.fromDocuments(docs, new OpenAIEmbeddings());
-    // const qaChain = VectorDBQAChain.fromLLM(model, vectorStore);
+    const qaChain = VectorDBQAChain.fromLLM(model, vectorStore);
 
-    // const answer = await qaChain.call({
-    //     input_documents: docs,
-    //     query: "You are a reporter for New York Times. " + 'Can you summarize the article?',
-    // });
-
-    const answer = {}
+    const answer = await qaChain.call({
+        input_documents: docs,
+        query: question
+    });
 
     res.status(200).json({answer: answer })
 }
