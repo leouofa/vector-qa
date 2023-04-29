@@ -1,18 +1,16 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { supabase } from '../../../lib/client'
-import { authenticate } from '../../../lib/auth'
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { supabase } from '../../../lib/client';
+import { authenticate } from '../../../lib/auth';
 
-export default async function handler(req:NextApiRequest, res:NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    try {
+        await authenticate(req, res);
 
-    authenticate(req, res, async () => {
-        const setId = req.body['setId']
-        const text = req.body['text']
+        const { setId, text } = req.body;
+        const { data, error } = await supabase.from('dataset').insert({ set_id: setId, text }).select();
 
-        const { data, error } = await supabase
-            .from('dataset')
-            .insert({ set_id: setId, text: text })
-            .select()
-
-        res.status(200).json({data: data, error: error})
-    })
+        res.status(200).json({ data, error });
+    } catch (error) {
+        res.status(401).json({ error: 'Unauthorized' });
+    }
 }
