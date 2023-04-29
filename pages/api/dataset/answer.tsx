@@ -14,32 +14,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
         await authenticate(req, res);
 
-        const setId = req.body.setId;
-        const question = req.body.question;
+        const { setId, question } = req.body;
 
-        let text = '';
+        // let text = '';
 
-        const { data, error } = await supabase.from('dataset').select('text').eq('set_id', setId);
+        const { data, error } = await supabase
+            .from('dataset')
+            .select('text')
+            .eq('set_id', setId);
 
-        for (let i = 0; i < data!.length; i++) {
-            text += data![i].text + ' ';
-        }
-
+        const text = data!.map((item) => item.text).join(' ');
         const model = new OpenAI({ maxTokens: 1000, temperature: 0.1 });
-
         const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000 });
         const docs = await textSplitter.createDocuments([text]);
-
         const embeddings = new OpenAIEmbeddings();
         const index = pinecone.Index(PINECONE_INDEX_NAME);
-
         const vectorStore = await PineconeStore.fromDocuments(docs, embeddings, {
             pineconeIndex: index,
             namespace: setId,
         });
 
         const qaChain = VectorDBQAChain.fromLLM(model, vectorStore);
-
         const answer = await qaChain.call({
             input_documents: docs,
             query: question,
