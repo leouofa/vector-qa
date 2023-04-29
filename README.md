@@ -1,6 +1,9 @@
 # VectorQA 🧮
 
-VectorQA is an open-source web application for building vector-based question-answering systems. The application uses pre-trained embeddings from OpenAI to convert natural language text into vector representations, and then indexes these vectors in a Pinecone vector store for efficient retrieval. With VectorQA, you can easily build and deploy question-answering systems that can provide accurate and flexible answers to a wide range of natural language questions.
+VectorQA is an open-source web application that leverages pre-trained word embeddings from OpenAI to create vector-based question-answering systems. These word embeddings are used to convert natural language text into high-dimensional vector representations, which are then indexed in a Pinecone vector store for efficient and scalable retrieval.
+
+This technology enables developers to easily build and deploy custom question-answering systems that can handle a wide variety of natural language queries, using state-of-the-art methods for semantic representation and similarity matching. By utilizing vector space models and advanced indexing techniques, VectorQA achieves high accuracy and flexibility in answering complex questions, while also supporting fast and parallelized query processing.
+
 
 ## Features
 - Vector-based question-answering: VectorQA uses pre-trained embeddings from OpenAI to generate vector representations of natural language text, allowing for efficient and accurate question-answering.
