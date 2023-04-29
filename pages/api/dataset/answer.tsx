@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import {supabase} from "../../../lib/client";
+import { authenticate } from '../../../lib/auth'
 
 import { VectorDBQAChain } from "langchain/chains";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
@@ -11,41 +12,43 @@ import { pinecone } from '../../../lib/pinecone_client';
 import { PINECONE_INDEX_NAME } from "../../../lib/pinecone_settings";
 
 export default async function handler(req:NextApiRequest, res:NextApiResponse) {
-    const setId = req.body['setId']
-    const question = req.body['question']
+    authenticate(req, res, async () => {
+        const setId = req.body['setId']
+        const question = req.body['question']
 
-    let text= ""
+        let text= ""
 
-    const { data, error } = await supabase
-        .from('dataset')
-        .select('text')
-        .eq('set_id', setId)
-
-
-    for (let i = 0; i < data!.length; i++) {
-        text += data![i].text + " "
-    }
+        const { data, error } = await supabase
+            .from('dataset')
+            .select('text')
+            .eq('set_id', setId)
 
 
-    const model = new OpenAI({ maxTokens: 1000, temperature: 0.1 });
+        for (let i = 0; i < data!.length; i++) {
+            text += data![i].text + " "
+        }
 
-    const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000 });
-    const docs = await textSplitter.createDocuments([text]);
 
-    const embeddings = new OpenAIEmbeddings();
-    const index = pinecone.Index(PINECONE_INDEX_NAME);
+        const model = new OpenAI({ maxTokens: 1000, temperature: 0.1 });
 
-    const vectorStore = await PineconeStore.fromDocuments(docs, embeddings, {
-        pineconeIndex: index,
-        namespace: setId,
-    });
+        const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000 });
+        const docs = await textSplitter.createDocuments([text]);
 
-    const qaChain = VectorDBQAChain.fromLLM(model, vectorStore);
+        const embeddings = new OpenAIEmbeddings();
+        const index = pinecone.Index(PINECONE_INDEX_NAME);
 
-    const answer = await qaChain.call({
-        input_documents: docs,
-        query: question
-    });
+        const vectorStore = await PineconeStore.fromDocuments(docs, embeddings, {
+            pineconeIndex: index,
+            namespace: setId,
+        });
 
-    res.status(200).json({answer: answer })
+        const qaChain = VectorDBQAChain.fromLLM(model, vectorStore);
+
+        const answer = await qaChain.call({
+            input_documents: docs,
+            query: question
+        });
+
+        res.status(200).json({answer: answer })
+    })
 }
