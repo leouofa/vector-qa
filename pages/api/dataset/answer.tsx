@@ -8,7 +8,7 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 
 import { PineconeStore } from 'langchain/vectorstores/pinecone';
 import { pinecone } from '../../../lib/pinecone_client';
-import { PINECONE_INDEX_NAME, PINECONE_NAME_SPACE } from '../../../lib/pinecone_settings';
+import { PINECONE_INDEX_NAME } from "../../../lib/pinecone_settings";
 
 export default async function handler(req:NextApiRequest, res:NextApiResponse) {
     const setId = req.body['setId']
@@ -32,15 +32,12 @@ export default async function handler(req:NextApiRequest, res:NextApiResponse) {
     const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000 });
     const docs = await textSplitter.createDocuments([text]);
 
-    console.log(docs)
-
     const embeddings = new OpenAIEmbeddings();
     const index = pinecone.Index(PINECONE_INDEX_NAME);
 
     const vectorStore = await PineconeStore.fromDocuments(docs, embeddings, {
         pineconeIndex: index,
-        namespace: PINECONE_NAME_SPACE,
-        textKey: 'text',
+        namespace: setId,
     });
 
     const qaChain = VectorDBQAChain.fromLLM(model, vectorStore);
