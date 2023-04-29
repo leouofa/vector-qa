@@ -7,7 +7,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         await authenticate(req, res);
 
         const { setId, text } = req.body;
-        const { data, error } = await supabase.from('dataset').insert({ set_id: setId, text }).select();
+        const { data, error } = await supabase
+            .from('dataset')
+            .insert({ set_id: setId, text })
+            .select();
 
         res.status(200).json({ data, error });
     } catch (error) {
